@@ -112,7 +112,7 @@ function agregar(k){
   const s=document.getElementById('sel-'+k); if(s&&s.value) { AOS.addClass(s.value,k); render(); }
 }
 function quitar(id,e){
-  e.stopPropagation(); AOS.removeClass(id); render();
+  e.stopPropagation(); AOS.removeFromClass(id); render();
 }
 render();
 </script>
