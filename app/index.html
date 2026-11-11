@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia OS · Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b0e17;--panel:#141826;--panel2:#1a2032;--line:#262d42;
+  --txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-size:1.45em;font-weight:700;letter-spacing:.03em}
+.brand b{color:var(--acc)}
+.sub{color:var(--mut);font-size:.85em;margin:2px 0 22px}
+.tag{font-size:.72em;padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.kpi .n{font-size:2em;font-weight:700}
+.kpi .t{color:var(--mut);font-size:.8em;margin-top:2px}
+.kpi.ok .n{color:var(--ok)} .kpi.bad .n{color:var(--bad)} .kpi.acc .n{color:var(--acc)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:26px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.panel h3{margin:0 0 14px;font-size:.95em;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.canvas-box{position:relative;height:300px}
+table{width:100%;border-collapse:collapse;font-size:.9em}
+th{color:var(--mut);text-align:left;font-weight:600;font-size:.78em;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+.pill{padding:3px 10px;border-radius:999px;font-size:.75em;font-weight:600}
+.pill.ok{background:rgba(45,212,167,.15);color:var(--ok)}
+.pill.bad{background:rgba(255,107,129,.15);color:var(--bad)}
+.pill.warn{background:rgba(255,180,84,.15);color:var(--warn)}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:.82em;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--mut)}
+.msg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.88em}
+.msg-row:last-child{border-bottom:none}
+.msg-row .to{color:var(--mut);font-size:.78em}
+.wa{color:#25d366;font-weight:600}
+a{color:var(--acc);text-decoration:none}
+footer{margin-top:26px;color:var(--mut);font-size:.78em;text-align:center}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Academia<b>OS</b> · Dashboard de gestión</div>
+    <span class="tag">Prototipo · Gestión de Innovación</span>
+  </header>
+  <p class="sub">Control de bailarines, pagos, asistencia y recordatorios automáticos — integrado con sticker NFC <a href="check.html">✦ ingreso por NFC</a></p>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>Tasa de asistencia semanal</h3>
+      <div class="canvas-box"><canvas id="chAsis"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>Flujo de cartera · pagado vs pendiente</h3>
+      <div class="canvas-box"><canvas id="chCartera"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:26px">
+    <h3>Clientes / bailarines</h3>
+    <table>
+      <thead><tr><th>Nombre</th><th>Estado</th><th>Cuota</th><th>Asistencias (sem)</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>Recordatorios automáticos a enviar</h3>
+    <p style="color:var(--mut);font-size:.8em;margin:0 0 10px">Se generan según estado del cliente (pago o clase) y se envían por WhatsApp.</p>
+    <div id="msgs"></div>
+  </div>
+
+  <footer>Academia OS — prototipo académico · demo sin datos reales</footer>
+</div>
+
+<script>
+// ---- datos del prototipo (localStorage, se comparte con check.html) ----
+function seed(){
+  if(localStorage.getItem('aos_clientes')) return;
+  const C=[
+   {n:'Laura Gómez', t:'mensual', est:'pagado',   asis:[1,1,1,0]},
+   {n:'Andrés Ruiz', t:'mensual', est:'pagado',   asis:[1,0,1,1]},
+   {n:'Camila Torres',t:'clase',  est:'vencido',  asis:[1,1,0,0]},
+   {n:'Kevin Salas', t:'mensual', est:'vencido',  asis:[0,1,0,0]},
+   {n:'Sara Muñoz',  t:'clase',  est:'pagado',   asis:[1,1,1,1]},
+   {n:'Julián Pérez',t:'clase',  est:'ninguno',  asis:[1,0,1,1]},
+   {n:'Valentina R.',t:'mensual',est:'pagado',   asis:[1,1,0,1]},
+   {n:'Mateo Vargas',t:'mensual',est:'vencido',  asis:[0,0,0,1]},
+  ];
+  localStorage.setItem('aos_clientes',JSON.stringify({c:C,regs:{}}));
+}
+function data(){ seed(); return JSON.parse(localStorage.getItem('aos_clientes')); }
+
+const d=data(), C=d.c;
+const activos=C.length, pagados=C.filter(x=>x.est==='pagado').length, vencidos=C.filter(x=>x.est==='vencido').length;
+const totalAsis=C.flatMap(x=>x.asis).reduce((a,b)=>a+b,0), totalPos=C.length*C[0].asis.length;
+
+document.getElementById('kpis').innerHTML=[
+ ['Clientes activos',activos,'acc'],['Al día (pagado)',pagados,'ok'],
+ ['Con pago vencido',vencidos,'bad'],['Asistencia global',Math.round(totalAsis/totalPos*100)+'%','']
+].map(k=>`<div class="kpi ${k[2]}"><div class="n" >${k[1]}</div><div class="t">${k[0]}</div></div>`).join('');
+
+document.getElementById('tbody').innerHTML=C.map(x=>
+ `<tr><td>${x.n}<br><span class="msg-row to">plan: ${x.t}</span></td>
+  <td><span class="pill ${x.est==='pagado'?'ok':x.est==='vencido'?'bad':'warn'}">${x.est==='pagado'?'al día':x.est==='vencido'?'pago vencido':'por iniciar'}</span></td>
+  <td>$${x.t==='mensual'?'90.000':'12.000'}</td>
+  <td>${x.asis.reduce((a,b)=>a+b,0)} / ${x.asis.length}</td></tr>`).join('');
+
+// mensajes: uno por cliente pendiente + todos reciben recordatorio de clase
+const msgs=[...C.filter(x=>x.est==='vencido').map(x=>({t:'pago',x})),
+            ...C.map(x=>({t:'clase',x}))];
+document.getElementById('msgs').innerHTML=msgs.map(m=>{
+ const txt=m.t==='pago'
+  ?`Hola ${m.x.n.split(' ')[0]} 💃 recuerda que tu cuota ${m.x.t} está vencida. Puedes renovar tu sticker NFC en recepción o por link de pago. ¡Te esperamos! — Academia OS`
+  :`Hola ${m.x.n.split(' ')[0]} 💃 mañana tu clase de baile. Marca tu ingreso con el sticker NFC al llegar. ¡Nos bailamos! — Academia OS`;
+ return `<div class="msg-row">
+   <div>${m.t==='pago'?'<span class="wa">💰 Pago</span>':'<span>🩰 Clase</span>'} · ${m.x.n}
+     <div class="msg-row to">WhatsApp → +57 3XX XXX XXXX · <span class="to">${txt.slice(0,58)}…</span></div></div>
+   <button class="btn ghost" onclick="copyM(this,${JSON.stringify(txt).replace(/"/g,'&quot;')})">Copiar msg</button>
+ </div>`;}).join('');
+function copyM(b,t){navigator.clipboard.writeText(t);b.textContent='✓ copiado';setTimeout(()=>b.textContent='Copiar msg',1500)}
+
+// gráfica asistencia (4 semanas)
+new Chart(document.getElementById('chAsis'),{type:'line',
+ data:{labels:['Sem 1','Sem 2','Sem 3','Sem 4'],
+  datasets:[{label:'Asistencia %',data:C[0].asis.map((_,w)=>Math.round(C.reduce((a,x)=>a+x.asis[w],0)/C.length*100)),
+   borderColor:'#7c5cff',backgroundColor:'rgba(124,92,255,.15)',fill:true,tension:.4,pointRadius:5}]},
+ options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a93ab'}}},
+  scales:{x:{ticks:{color:'#8a93ab'},grid:{color:'#262d42'}},y:{max:100,ticks:{color:'#8a93ab',callback:v=>v+'%'},grid:{color:'#262d42'}}}}});
+
+// gráfica cartera: pagado vs pendiente por semana
+new Chart(document.getElementById('chCartera'),{type:'bar',
+ data:{labels:['Sem 1','Sem 2','Sem 3','Sem 4'],
+  datasets:[
+   {label:'Pagado ($k)',data:[270,180,270,90],backgroundColor:'#2dd4a7',borderRadius:8},
+   {label:'Pendiente ($k)',data:[90,180,90,180],backgroundColor:'#ff6b81',borderRadius:8}]},
+ options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a93ab'}}},
+  scales:{x:{stacked:true,ticks:{color:'#8a93ab'},grid:{display:false}},y:{stacked:true,ticks:{color:'#8a93ab',callback:v=>'$'+v+'k'},grid:{color:'#262d42'}}}}});
+</script>
+</body>
+</html>
