@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia OS · Ingreso NFC</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 26px;width:100%;max-width:400px}
+.brand{font-weight:700;font-size:1.2em;letter-spacing:.03em;text-align:center}
+.brand b{color:var(--acc)}
+.sub{color:var(--mut);font-size:.8em;text-align:center;margin:6px 0 24px}
+input{width:100%;padding:13px 14px;margin-bottom:12px;border-radius:11px;border:1px solid var(--line);background:#0e1220;color:var(--txt);font-size:1em;outline:none}
+input:focus{border-color:var(--acc)}
+.btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:11px;padding:13px;font-size:1em;font-weight:700;cursor:pointer}
+.hint{color:var(--mut);font-size:.74em;text-align:center;margin-top:16px}
+#res{display:none;text-align:center}
+#res .big{font-size:2.6em}
+#res h2{margin:8px 0 4px}
+#res p{color:var(--mut);font-size:.85em}
+a{color:var(--acc);text-decoration:none;font-size:.8em}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="form" class="form">
+    <div class="brand">Academia<b>OS</b></div>
+    <div class="sub">✦ Sticker NFC · Marca tu ingreso</div>
+    <input id="nom" placeholder="Nombre completo" autocomplete="off">
+    <input id="tel" placeholder="Número de celular" inputmode="numeric" autocomplete="off">
+    <button class="btn" onclick="marcar()">Marcar asistencia de hoy</button>
+    <div class="hint">Escaneado con el sticker NFC de la puerta · <span id="hoy"></span></div>
+  </div>
+  <div id="res">
+    <div class="big">✅</div>
+    <h2>¡Ingreso registrado!</h2>
+    <p id="det"></p>
+    <a href="#" onclick="location.reload()">← Registrar otra persona</a>
+  </div>
+</div>
+<script>
+document.getElementById('hoy').textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+function marcar(){
+ const n=document.getElementById('nom').value.trim(),t=document.getElementById('tel').value.trim();
+ if(!n||!t){alert('Completa nombre y número');return}
+ const d=JSON.parse(localStorage.getItem('aos_clientes')||'{"c":[],"regs":{}}');
+ const hoy=new Date().toISOString().slice(0,10);
+ d.regs[hoy]=d.regs[hoy]||[];
+ d.regs[hoy].push({n,t,ts:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})});
+ localStorage.setItem('aos_clientes',JSON.stringify(d));
+ document.getElementById('form').style.display='none';
+ const r=document.getElementById('res');r.style.display='block';
+ document.getElementById('det').textContent=`${n} · ${t} · ${hoy} `+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+}
+</script>
+</body>
+</html>
