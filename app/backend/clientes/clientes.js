@@ -42,7 +42,31 @@
       d.c.push(nc); save(d); return nc;
     },
     packLabel(p){ return p==='mensual'?'Mensual ilimitado':p+' clases/mes'; },
+    packNum(p){ return p==='mensual'?20:parseInt(p,10); },
+    usadas(x){ return x.asis ? x.asis.reduce((a,b)=>a+b,0) : 0; },
+    /* clases restantes para culminar su mensualidad/paquete */
+    restantes(x){
+      if(x.est==='vencido') return 0;
+      return Math.max(0, this.packNum(x.paq)-this.usadas(x));
+    },
+    /* terminó todas sus clases → debe pagar para reactivarse */
+    agotado(x){
+      return x.est!=='vencido' && this.usadas(x)>=this.packNum(x.paq);
+    },
+    /* estado efectivo en el grupo: agotado cuenta como pendiente a pagar */
+    pendiente(x){
+      return x.est==='vencido'||x.est==='por iniciar'||this.agotado(x);
+    },
+    estadoGrupo(x){
+      if(x.est==='vencido') return 'Vencido';
+      if(this.agotado(x)) return 'Pendiente a pagar';
+      if(x.est==='por iniciar') return 'Por iniciar';
+      return 'Activo';
+    },
+    setClase(id,clase){ return this.update(id,{clase}); },
+    removeFromClass(id){ return this.update(id,{clase:null}); },
+    addClass(id,clase){ return this.update(id,{clase}); },
     classes(){ return CLASSES; },
-    isPending(x){ return x.est==='vencido'||x.est==='por iniciar'; }
+    isPending(x){ return x.est==='vencido'||x.est==='por iniciar'||this.agotado(x); }
   };
 })();
