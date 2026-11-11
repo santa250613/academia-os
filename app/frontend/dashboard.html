@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia OS · Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-size:1.45em;font-weight:700}.brand b{color:var(--acc)}
+.sub{color:var(--mut);font-size:.85em;margin:2px 0 22px}
+.tag{font-size:.72em;padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
+nav{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+nav a{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 16px;color:var(--txt);font-size:.9em;font-weight:600}
+nav a:hover{border-color:var(--acc)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.kpi .n{font-size:2em;font-weight:700}.kpi .t{color:var(--mut);font-size:.8em;margin-top:2px}
+.kpi.ok .n{color:var(--ok)}.kpi.bad .n{color:var(--bad)}.kpi.acc .n{color:var(--acc)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:26px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.panel h3{margin:0 0 14px;font-size:.95em;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between;align-items:center}
+.canvas-box{position:relative;height:280px}
+table{width:100%;border-collapse:collapse;font-size:.9em}
+th{color:var(--mut);text-align:left;font-weight:600;font-size:.78em;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:none}
+.m-sub{color:var(--mut);font-size:.78em}
+.pill{padding:3px 10px;border-radius:999px;font-size:.75em;font-weight:600}
+.pill.ok{background:rgba(45,212,167,.15);color:var(--ok)}.pill.bad{background:rgba(255,107,129,.15);color:var(--bad)}.pill.warn{background:rgba(255,180,84,.15);color:var(--warn)}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:.82em;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.msg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.88em}
+.msg-row:last-child{border-bottom:none}
+.wa{color:#25d366;font-weight:600}
+a{color:var(--acc);text-decoration:none}
+footer{margin-top:26px;color:var(--mut);font-size:.78em;text-align:center}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Academia<b>OS</b> · Dashboard de gestión</div>
+    <span class="tag">Prototipo · Gestión de Innovación</span>
+  </header>
+  <p class="sub">Control de bailarines, pagos, asistencia y recordatorios — sticker NFC: <a href="../check.html">✦ ingreso</a></p>
+
+  <nav>
+    <a href="clientes.html">👥 Clientes</a>
+    <a href="clases.html">🩰 Clases</a>
+  </nav>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <div class="panel"><h3>Tasa de asistencia semanal</h3><div class="canvas-box"><canvas id="chAsis"></canvas></div></div>
+    <div class="panel"><h3>Flujo de cartera · pagado vs pendiente</h3><div class="canvas-box"><canvas id="chCartera"></canvas></div></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:26px">
+    <h3>Clientes <a class="btn" href="clientes.html">Ver todos</a></h3>
+    <p style="color:var(--mut);font-size:.78em;margin:0 0 8px">Los últimos 8 clientes agregados (incluye los que llegan por NFC).</p>
+    <table><thead><tr><th>Nombre</th><th>Estado</th><th>Cuota</th><th>Asistencias</th></tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+
+  <div class="panel">
+    <h3>Recordatorios automáticos</h3>
+    <p style="color:var(--mut);font-size:.8em;margin:0 0 10px">Según estado del cliente (pago o clase), se envían por WhatsApp.</p>
+    <div id="msgs"></div>
+  </div>
+
+  <footer>Academia OS — prototipo académico · datos demo</footer>
+</div>
+
+<script src="../backend/clientes/clientes.js"></script>
+<script src="../backend/pagos/pagos.js"></script>
+<script src="../backend/asistencias/asistencias.js"></script>
+<script src="../backend/dashboard/dashboard.js"></script>
+</body>
+</html>

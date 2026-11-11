@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia OS · Clases</title>
+<style>
+:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-size:1.4em;font-weight:700}.brand b{color:var(--acc)}
+.sub{color:var(--mut);font-size:.85em;margin:2px 0 20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.panel h2{margin:0 0 4px;font-size:1.05em}.panel .hor{color:var(--mut);font-size:.8em;margin:0 0 12px}
+li{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;margin-bottom:6px;font-size:.9em}
+ul{margin:0;padding:0}
+li.act{background:#12172a}
+li.pend{background:#0e1220;color:#4a5168;opacity:.85}
+li.pend .nm{color:#5a6178}
+li.pend .ord{order:99}
+.pill{padding:3px 10px;border-radius:999px;font-size:.72em;font-weight:700;white-space:nowrap}
+.pill.ok{background:rgba(45,212,167,.18);color:var(--ok)}
+.pill.pend{background:#232a40;color:#8a93ab}
+.n-pos{color:var(--mut);font-size:.78em;width:20px}
+.tag{font-size:.72em;padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
+a{color:var(--acc);text-decoration:none}
+footer{margin-top:22px;color:var(--mut);font-size:.78em;text-align:center}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="brand">Academia<b>OS</b> · Clases</div><a class="tag" href="dashboard.html">← Dashboard</a></header>
+  <p class="sub">Alumnos por clase específica · los pendientes de pago aparecen en gris, <b>Pendiente a pagar</b>, y al final de la lista de asistencia.</p>
+  <div class="grid" id="gr"></div>
+  <footer>Academia OS — prototipo académico</footer>
+</div>
+<script src="../backend/clientes/clientes.js"></script>
+<script src="../backend/pagos/pagos.js"></script>
+<script src="../backend/asistencias/asistencias.js"></script>
+<script>
+const CS=AOS.classes();
+document.getElementById('gr').innerHTML=Object.keys(CS).map(k=>{
+  const g=AOSAsis.grupo(k);
+  const items=g.map((x,i)=>{
+    const pend=AOS.isPending(x);
+    return `<li class="${pend?'pend':'act'}">
+      <span><span class="n-pos">${i+1}.</span> <span class="nm">${x.n}</span>
+        <span style="color:var(--mut);font-size:.78em">${x.tel}</span></span>
+      ${pend?'<span class="pill pend">Pendiente a pagar</span>':'<span class="pill ok">Activo</span>'}
+    </li>`;}).join('');
+  return `<div class="panel"><h2>${CS[k]}</h2>
+    <p class="hor">${g.filter(x=>!AOS.isPending(x)).length} activos · ${g.filter(x=>AOS.isPending(x)).length} pendientes de pago · ${g.length} alumnos</p>
+    <ul>${items||'<li style="color:var(--mut)">Sin alumnos aún</li>'}</ul></div>`;}).join('');
+</script>
+</body>
+</html>

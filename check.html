@@ -41,6 +41,7 @@ a{color:var(--acc);text-decoration:none;font-size:.8em}
     <a href="#" onclick="location.reload()">← Registrar otra persona</a>
   </div>
 </div>
+<script src="backend/clientes/clientes.js"></script>
 <script>
 document.getElementById('hoy').textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
 function marcar(){
@@ -48,12 +49,13 @@ function marcar(){
  if(!n||!t){alert('Completa nombre y número');return}
  const d=JSON.parse(localStorage.getItem('aos_clientes')||'{"c":[],"regs":{}}');
  const hoy=new Date().toISOString().slice(0,10);
- d.regs[hoy]=d.regs[hoy]||[];
- d.regs[hoy].push({n,t,ts:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})});
+ const reg={n,t,ts:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})};
+ d.regs[hoy]=d.regs[hoy]||[]; d.regs[hoy].push(reg);
  localStorage.setItem('aos_clientes',JSON.stringify(d));
+ AOS.addFromReg(reg); // el nuevo cliente aparece ya en el dashboard
  document.getElementById('form').style.display='none';
  const r=document.getElementById('res');r.style.display='block';
- document.getElementById('det').textContent=`${n} · ${t} · ${hoy} `+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+ document.getElementById('det').textContent=`${n} · ${t} · ${hoy} `+reg.ts;
 }
 </script>
 </body>
