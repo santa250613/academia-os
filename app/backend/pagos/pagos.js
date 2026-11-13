@@ -1,24 +1,29 @@
 /* Academia OS · backend/pagos/pagos.js
-   Estados de pago + cartera. Pago presencial y recordatorios de cobro. */
+   Pagos + cartera. Usa AOS.estado() para que coincida con clases y clientes. */
 (function(){
   const PRECIO={ '4':40000, '8':65000, '12':85000, 'mensual':90000 };
   window.AOSPagos={
     precio(p){ return PRECIO[p]||0; },
     fmt(v){ return '$'+v.toLocaleString('es-CO'); },
-    /* la profesora recibió el pago en efectivo presencial */
+    /* la profesora recibió el pago en efectivo.
+       `base` guarda las clases ya usadas: el paquete nuevo arranca en 0 */
     pagarPresencial(id){
       const c=window.AOS.get(id);
       if(!c) return null;
-      window.AOS.update(id,{est:'pagado'});
-      return c;
+      window.AOS.update(id,{est:'pagado', base:window.AOS.totalRaw(c)});
+      return window.AOS.get(id);
     },
-    vencidos(){ return window.AOS.all().filter(x=>x.est==='vencido'); },
-    /* cartera semanal simulada: pagado vs pendiente en $k */
+    /* clientes con mensualidad vencida (incluye paquete agotado) */
+    vencidos(){ return window.AOS.all().filter(x=>window.AOS.estado(x)==='vencido'); },
+    /* cartera: pagado = al día; pendiente = vencido o por iniciar */
     carteraPorSemana(){
-      const cs=window.AOS.all();
       let pagado=0, pend=0;
-      cs.forEach(x=>{ if(x.est==='pagado') pagado+=PRECIO[x.paq]; else pend+=PRECIO[x.paq]; });
+      window.AOS.all().forEach(x=>{
+        const v=PRECIO[x.paq]||0;
+        if(window.AOS.estado(x)==='al_dia') pagado+=v; else pend+=v;
+      });
       return {pagado,pend};
     }
   };
 })();
+ 

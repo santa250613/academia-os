@@ -2,31 +2,33 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Academia OS · Ingreso NFC</title>
 <meta name="robots" content="noindex">
 <style>
-:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7}
+:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 26px;width:100%;max-width:400px}
+body{margin:0;min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:clamp(22px,6vw,34px) clamp(18px,5vw,28px);width:100%;max-width:420px}
 .brand{font-weight:700;font-size:1.2em;letter-spacing:.03em;text-align:center}
 .brand b{color:var(--acc)}
 .sub{color:var(--mut);font-size:.8em;text-align:center;margin:6px 0 24px}
-input{width:100%;padding:13px 14px;margin-bottom:12px;border-radius:11px;border:1px solid var(--line);background:#0e1220;color:var(--txt);font-size:1em;outline:none}
+input{width:100%;padding:14px;margin-bottom:12px;border-radius:11px;border:1px solid var(--line);background:#0e1220;color:var(--txt);font-size:16px;outline:none}
 input:focus{border-color:var(--acc)}
-.btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:11px;padding:13px;font-size:1em;font-weight:700;cursor:pointer}
+.btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:11px;padding:14px;font-size:1em;font-weight:700;cursor:pointer;min-height:48px}
 .hint{color:var(--mut);font-size:.74em;text-align:center;margin-top:16px}
 #res{display:none;text-align:center}
 #res .big{font-size:2.6em}
 #res h2{margin:8px 0 4px}
-#res p{color:var(--mut);font-size:.85em}
-a{color:var(--acc);text-decoration:none;font-size:.8em}
+#res p{color:var(--mut);font-size:.85em;margin:6px 0}
+#aviso{font-weight:600}
+#aviso.ok{color:var(--ok)}#aviso.bad{color:var(--bad)}#aviso.warn{color:var(--warn)}
+a{color:var(--acc);text-decoration:none;font-size:.85em;display:inline-block;margin-top:10px;padding:8px}
 </style>
 </head>
 <body>
 <div class="card">
-  <div id="form" class="form">
+  <div id="form">
     <div class="brand">Academia<b>OS</b></div>
     <div class="sub">✦ Sticker NFC · Marca tu ingreso</div>
     <input id="nom" placeholder="Nombre completo" autocomplete="off">
@@ -35,27 +37,38 @@ a{color:var(--acc);text-decoration:none;font-size:.8em}
     <div class="hint">Escaneado con el sticker NFC de la puerta · <span id="hoy"></span></div>
   </div>
   <div id="res">
-    <div class="big">✅</div>
-    <h2>¡Ingreso registrado!</h2>
+    <div class="big" id="icono">✅</div>
+    <h2 id="titulo">¡Ingreso registrado!</h2>
     <p id="det"></p>
-    <a href="#" onclick="location.reload()">← Registrar otra persona</a>
+    <p id="aviso"></p>
+    <a href="#" onclick="location.reload();return false">← Registrar otra persona</a>
   </div>
 </div>
-<script src="backend/clientes/clientes.js"></script>
+
+<script src="backend/clientes/clientes.js?v=3"></script>
 <script>
 document.getElementById('hoy').textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+
 function marcar(){
- const n=document.getElementById('nom').value.trim(),t=document.getElementById('tel').value.trim();
- if(!n||!t){alert('Completa nombre y número');return}
- const d=JSON.parse(localStorage.getItem('aos_clientes')||'{"c":[],"regs":{}}');
- const hoy=new Date().toISOString().slice(0,10);
- const reg={n,t,ts:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})};
- d.regs[hoy]=d.regs[hoy]||[]; d.regs[hoy].push(reg);
- localStorage.setItem('aos_clientes',JSON.stringify(d));
- AOS.addFromReg(reg); // el nuevo cliente aparece ya en el dashboard
- document.getElementById('form').style.display='none';
- const r=document.getElementById('res');r.style.display='block';
- document.getElementById('det').textContent=`${n} · ${t} · ${hoy} `+reg.ts;
+  const n=document.getElementById('nom').value.trim(), t=document.getElementById('tel').value.trim();
+  if(!n||!t){ alert('Completa nombre y número'); return; }
+
+  /* un solo paso: busca al alumno por celular, marca su asistencia y actualiza
+     clases, asistencias y dashboard (o lo crea como "por iniciar" si es nuevo) */
+  const r=AOS.registrarAsistencia({n,t});
+  const c=r.cliente, est=AOS.estado(c);
+
+  document.getElementById('form').style.display='none';
+  document.getElementById('res').style.display='block';
+  document.getElementById('titulo').textContent=r.repetido?'Ya estabas registrado hoy':'¡Ingreso registrado!';
+  document.getElementById('icono').textContent=r.repetido?'👌':'✅';
+  document.getElementById('det').textContent=`${c.n} · ${AOS.hoy()}`+(c.clase?` · ${AOS.classes()[c.clase]}`:'');
+
+  const av=document.getElementById('aviso');
+  if(r.nuevo){ av.className='warn'; av.textContent='Bienvenido/a. Pasa por recepción para elegir tu paquete.'; }
+  else if(est==='vencido'){ av.className='bad'; av.textContent='Tu mensualidad está vencida. Pasa por recepción para renovarla.'; }
+  else if(est==='por_iniciar'){ av.className='warn'; av.textContent='Aún no has pagado tu paquete. Pasa por recepción.'; }
+  else { av.className='ok'; av.textContent=`Te quedan ${AOS.restantes(c)} clases en tu paquete.`; }
 }
 </script>
 </body>

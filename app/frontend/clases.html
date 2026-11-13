@@ -2,119 +2,99 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Academia OS · Clases</title>
-<style>
-:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif}
-.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:6px}
-.brand{font-size:1.4em;font-weight:700}.brand b{color:var(--acc)}
-.sub{color:var(--mut);font-size:.85em;margin:2px 0 20px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
-.card{background:#131830;border:1px solid var(--line);border-radius:14px;padding:20px;cursor:pointer;transition:.15s}
-.card:hover{border-color:var(--acc);transform:translateY(-2px)}
-.card h2{margin:0 0 4px;font-size:1.08em}
-.card .hor{color:var(--mut);font-size:.8em;margin:0}
-.card .abrir{color:var(--acc);font-size:.8em;margin-top:12px;font-weight:600}
-.det h2{margin:0;font-size:1.05em}
-.det .hor{color:var(--mut);font-size:.8em;margin:0 0 14px}
-.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-ul{margin:0;padding:0}
-li{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;margin-bottom:6px;font-size:.88em}
-li.act{background:#12172a}
-li.pend{background:#0e1220;color:#4a5168;order:99}
-li .nm{font-weight:600}
-li.pend .nm{color:#5a6178;font-weight:400}
-.lis{display:flex;flex-direction:column}
-.meta{color:var(--mut);font-size:.76em;display:block}
-.pill{padding:3px 10px;border-radius:999px;font-size:.72em;font-weight:700;white-space:nowrap}
-.pill.ok{background:rgba(45,212,167,.18);color:var(--ok)}
-.pill.pend{background:#232a40;color:#8a93ab}
-.pill.fin{background:rgba(255,180,84,.15);color:var(--warn)}
-.n-pos{color:var(--mut);font-size:.78em;width:20px}
-.rest{font-size:.72em;color:var(--mut);font-weight:400}
-.del{background:none;border:none;cursor:pointer;color:#5a6178;font-size:1em;opacity:.65}.del:hover{color:var(--bad);opacity:1}
-.addrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-select,.btn{background:#0e1220;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 11px;font-size:.82em}
-.btn.add{background:var(--acc);border:none;color:#fff;font-weight:700;cursor:pointer}
-.tiny{font-size:.74em;color:var(--mut);margin-top:10px}
-.tag{font-size:.72em;padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
-a{color:var(--acc);text-decoration:none}
-footer{margin-top:22px;color:var(--mut);font-size:.78em;text-align:center}
-@media(max-width:800px){.grid,.det-grid{grid-template-columns:1fr}}
-</style>
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <div class="wrap">
   <header><div class="brand">Academia<b>OS</b> · Clases</div><a class="tag" href="dashboard.html">← Dashboard</a></header>
-  <p class="sub">Da click en la tarjeta de una clase para ver y editar quiénes conforman el grupo.</p>
+  <p class="sub">Toca la tarjeta de una clase para ver y editar quiénes conforman el grupo.</p>
+
+  <div class="toolbar">
+    <label for="fecha">Asistencia del día:</label>
+    <input type="date" id="fecha">
+    <span id="resumenDia"></span>
+  </div>
+
   <div class="grid" id="gr"></div>
   <div id="dets"></div>
   <footer>Academia OS — prototipo académico</footer>
 </div>
-<script src="../backend/clientes/clientes.js?v=2"></script>
-<script src="../backend/pagos/pagos.js?v=2"></script>
-<script src="../backend/asistencias/asistencias.js?v=2"></script>
+
+<script src="../backend/clientes/clientes.js?v=3"></script>
+<script src="../backend/pagos/pagos.js?v=3"></script>
+<script src="../backend/asistencias/asistencias.js?v=3"></script>
 <script>
-const CS=AOS.classes();
-let abierto=null;
+const CS=AOS.classes(), esc=AOS.esc;
+let abierto=null, fecha=AOS.hoy();
+const inp=document.getElementById('fecha');
+inp.value=fecha;
+inp.addEventListener('change',()=>{ fecha=inp.value||AOS.hoy(); render(); });
+
+/* pastilla de asistencia del día elegido */
+function pillAsis(x){
+  const d=AOSAsis.estadoDia(x,fecha);
+  if(d.estado==='asistio') return `<span class="pill ok">✔ Asistió · ${esc(d.hora)}</span>`;
+  if(d.estado==='futuro')  return `<span class="pill pend">Por venir</span>`;
+  return `<span class="pill bad">✖ Falta</span>`;
+}
+/* pastilla de pago: MISMA regla que dashboard y clientes */
+function pillPago(x){ return `<span class="pill ${AOS.pillClass(x)}">${AOS.estadoLabel(x)}</span>`; }
 
 function lista(k,detail){
   const g=AOSAsis.grupo(k);
   if(!g.length) return '<li style="color:var(--mut)">Sin alumnos aún — agrégalo abajo ↓</li>';
   return g.map((x,i)=>{
-    const agot=AOS.agotado(x), pend=AOS.isPending(x);
-    const pill= agot?'<span class="pill fin">Pendiente a pagar</span>'
-     : x.est==='vencido'?'<span class="pill pend">Pendiente a pagar</span>'
-     : x.est==='por iniciar'?'<span class="pill pend">Por iniciar</span>'
-     : '<span class="pill ok">Activo</span>';
-    const extra= detail?`<span class="meta">💵 ${x.est==='pagado'?'al día':'por pagar'} · 🎯 ${AOS.restantes(x)} de ${AOS.packLabel(x.paq)} restantes</span>`:'';
-    return `<li class="${pend?'pend':'act'}">
-      <span style="min-width:0"><span class="n-pos">${i+1}.</span> <span class="nm">${x.n}</span>${extra}</span>
-      <span style="display:flex;align-items:center;gap:6px">${pill}
-        <button class="del" title="Quitar del grupo" onclick="quitar('${x.id}',event)">✕</button></span>
+    const motivo=AOS.motivo(x);
+    const extra=detail?`<span class="meta">🎯 ${AOS.restantes(x)} de ${AOS.packLabel(x.paq)} restantes${motivo?' · '+motivo:''}</span>`:'';
+    const del=detail?`<button class="del" title="Quitar del grupo" aria-label="Quitar a ${esc(x.n)} del grupo" onclick="quitar('${x.id}',event)">✕</button>`:'';
+    return `<li class="${AOS.isPending(x)?'pend':'act'}">
+      <span class="who"><span class="n-pos">${i+1}.</span><span class="nm">${esc(x.n)}</span>${extra}</span>
+      <span class="tags">${pillAsis(x)}${pillPago(x)}${del}</span>
     </li>`;}).join('');
 }
 
 function render(){
+  let totalAsistieron=0;
   document.getElementById('gr').innerHTML=Object.keys(CS).map(k=>{
     const g=AOSAsis.grupo(k);
     const act=g.filter(x=>!AOS.isPending(x)).length;
+    const vino=g.filter(x=>AOSAsis.estadoDia(x,fecha).estado==='asistio').length;
+    totalAsistieron+=vino;
     return `<div class="card" onclick="toggle('${k}')">
       <h2>${CS[k]}</h2>
-      <p class="hor">${act} activos · ${g.length-act} pendientes · ${g.length} alumnos</p>
-      <ul id="mini-${k}">${lista(k,false)}</ul>
+      <p class="hor">${act} al día · ${g.length-act} pendientes · ${g.length} alumnos · ✔ ${vino} asistieron</p>
+      <ul>${lista(k,false)}</ul>
       <p class="abrir">${abierto===k?'▲ Cerrar gestión del grupo':'▼ Ver grupo y agregar/eliminar alumnos'}</p>
     </div>`;}).join('');
+  document.getElementById('resumenDia').textContent=`${totalAsistieron} asistencias registradas ese día`;
+
   document.getElementById('dets').innerHTML=Object.keys(CS).filter(k=>k===abierto).map(k=>{
     const otros=AOS.all().filter(x=>x.clase!==k);
-    const opts=otros.length?otros.map(x=>`<option value="${x.id}">${x.n}</option>`).join(''):'<option value="">— no hay clientes sin clase —</option>';
-    return `<div class="panel det" style="margin-top:16px">
+    const opts=otros.length?otros.map(x=>`<option value="${x.id}">${esc(x.n)}</option>`).join(''):'<option value="">— no hay clientes sin clase —</option>';
+    return `<div class="panel det">
       <h2>${CS[k]} · gestión del grupo</h2>
-      <p class="hor">Orden de asistencia: activos arriba, pendientes/agotados al final en gris.</p>
+      <p class="hor">Orden: alumnos al día arriba; mensualidad vencida o por iniciar al final en gris.</p>
       <div class="det-grid">
         <div class="lis"><ul>${lista(k,true)}</ul></div>
         <div>
-          <div class="addrow" style="margin-top:0">
-            <select id="sel-${k}" style="min-width:180px">${opts}</select>
+          <div class="addrow">
+            <select id="sel-${k}" aria-label="Alumno a agregar">${opts}</select>
             <button class="btn add" onclick="agregar('${k}')">+ Agregar al grupo</button>
           </div>
-          <p class="tiny">Mock de la demo: cada clase asistencia acumula; cuando la persona ya registró todas sus clases del paquete, pasa a <b>Pendiente a pagar</b> (gris, al final) hasta renovar el pago.</p>
-          <p class="tiny" style="margin-top:4px">✕ quita a la persona del grupo (puede añadirse después a otra clase desde aquí).</p>
+          <p class="tiny">La asistencia se marca sola cuando el alumno escanea el sticker NFC. Si ya usó todas las clases de su paquete, pasa a <b>Mensualidad vencida</b> hasta renovar el pago.</p>
+          <p class="tiny">✕ quita a la persona del grupo (puede añadirse después a otra clase desde aquí).</p>
         </div>
       </div>
     </div>`;}).join('');
 }
 function toggle(k){ abierto=abierto===k?null:k; render(); }
-function agregar(k){
-  const s=document.getElementById('sel-'+k); if(s&&s.value) { AOS.addClass(s.value,k); render(); }
-}
-function quitar(id,e){
-  e.stopPropagation(); AOS.removeFromClass(id); render();
-}
+function agregar(k){ const s=document.getElementById('sel-'+k); if(s&&s.value){ AOS.addClass(s.value,k); render(); } }
+function quitar(id,e){ e.stopPropagation(); AOS.removeFromClass(id); render(); }
+
 render();
+AOS.onChange(render);   // si alguien marca ingreso en check.html, esta vista se actualiza sola
 </script>
 </body>
 </html>

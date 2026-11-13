@@ -2,52 +2,52 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Academia OS · Clientes</title>
-<style>
-:root{--bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;--acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif}
-.wrap{max-width:1000px;margin:0 auto;padding:28px 20px 60px}
-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:6px}
-.brand{font-size:1.4em;font-weight:700}.brand b{color:var(--acc)}
-.sub{color:var(--mut);font-size:.85em;margin:2px 0 20px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
-table{width:100%;border-collapse:collapse;font-size:.88em}
-th{color:var(--mut);text-align:left;font-weight:600;font-size:.75em;text-transform:uppercase;letter-spacing:.06em;padding:8px 8px;border-bottom:1px solid var(--line)}
-td{padding:9px 8px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:none}
-select,.btn{background:#0e1220;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85em}
-.btn.pay{background:var(--ok);color:#04140e;border:none;font-weight:700;cursor:pointer}
-.saved{color:var(--ok);font-size:.8em;padding:0 6px}
-.tag{font-size:.72em;padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
-a{color:var(--acc);text-decoration:none}
-footer{margin-top:22px;color:var(--mut);font-size:.78em;text-align:center}
-</style>
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <div class="wrap">
   <header><div class="brand">Academia<b>OS</b> · Clientes</div><a class="tag" href="dashboard.html">← Dashboard</a></header>
-  <p class="sub">Todas las clientas y bailarines · modifica estado (pago presencial) y paquete de clases.</p>
+  <p class="sub">Todas las clientas y bailarines · modifica la clase, el paquete y registra el pago presencial. Los cambios se reflejan en Clases y Dashboard.</p>
   <div class="panel">
-    <table><thead><tr><th>Nombre</th><th>Celular</th><th>Estado</th><th>Paquete</th><th>Pago presencial</th></tr></thead>
-    <tbody id="tb"></tbody></table>
+    <div class="tablewrap">
+      <table class="rt">
+        <thead><tr><th>Nombre</th><th>Celular</th><th>Clase</th><th>Estado</th><th>Paquete</th><th>Restantes</th><th>Pago presencial</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
   </div>
   <footer>Academia OS — prototipo académico</footer>
 </div>
-<script src="../backend/clientes/clientes.js?v=2"></script>
-<script src="../backend/pagos/pagos.js?v=2"></script>
+
+<script src="../backend/clientes/clientes.js?v=3"></script>
+<script src="../backend/pagos/pagos.js?v=3"></script>
 <script>
+const CS=AOS.classes(), esc=AOS.esc;
+
 function render(){
-  // (paquete se arma directo en la fila)
-  document.getElementById('tb').innerHTML=AOS.all().map(x=>
-   `<tr><td>${x.n}</td><td style="color:var(--mut)">${x.tel}</td>
-    <td><span class="saved" id="s-${x.id}"></span><span class="pill ${x.est==='pagado'?'ok':x.est==='vencido'?'bad':'warn'}" style="display:inline-block">${x.est==='pagado'?'al día':x.est==='vencido'?'vencido':'por iniciar'}</span></td>
-    <td><select onchange="setPaq('${x.id}',this.value)">${[4,8,12,'mensual'].map(p=>`<option value="${p}" ${String(p)===x.paq?'selected':''}>${AOS.packLabel(p)}</option>`).join('')}</select></td>
-    <td>${x.est==='pagado'?'<span style="color:var(--mut)">—</span>':`<button class="btn pay" onclick="pagar('${x.id}')">💵 Pagar hoy</button>`}</td></tr>`).join('');
+  document.getElementById('tb').innerHTML=AOS.all().map(x=>{
+    const motivo=AOS.motivo(x);
+    return `<tr>
+    <td data-label="Nombre">${esc(x.n)}</td>
+    <td data-label="Celular" style="color:var(--mut)">${esc(x.tel)}</td>
+    <td data-label="Clase"><select aria-label="Clase de ${esc(x.n)}" onchange="setClase('${x.id}',this.value)">
+      <option value="">Sin clase</option>
+      ${Object.keys(CS).map(k=>`<option value="${k}" ${x.clase===k?'selected':''}>${CS[k]}</option>`).join('')}
+    </select></td>
+    <td data-label="Estado"><span class="saved" id="s-${x.id}"></span><span class="pill ${AOS.pillClass(x)}">${AOS.estadoLabel(x)}</span>${motivo?`<br><span class="m-sub">${motivo}</span>`:''}</td>
+    <td data-label="Paquete"><select aria-label="Paquete de ${esc(x.n)}" onchange="setPaq('${x.id}',this.value)">${[4,8,12,'mensual'].map(p=>`<option value="${p}" ${String(p)===x.paq?'selected':''}>${AOS.packLabel(p)}</option>`).join('')}</select></td>
+    <td data-label="Restantes">${AOS.restantes(x)}</td>
+    <td data-label="Pago">${AOS.estado(x)==='al_dia'?'<span style="color:var(--mut)">—</span>':`<button class="btn pay" onclick="pagar('${x.id}')">💵 Pagar hoy</button>`}</td></tr>`;}).join('');
 }
-function setPaq(id,p){AOS.update(id,{paq:p});flash(id,'paquete ✓')}
-function pagar(id){AOSPagos.pagarPresencial(id);render();}
-function flash(id,t){const el=document.getElementById('s-'+id);el.textContent=t;setTimeout(()=>el.textContent='',1400)}
+function setClase(id,c){ AOS.setClase(id,c); render(); flash(id,'clase ✓'); }
+function setPaq(id,p){ AOS.update(id,{paq:p}); render(); flash(id,'paquete ✓'); }
+function pagar(id){ AOSPagos.pagarPresencial(id); render(); flash(id,'pago ✓'); }
+function flash(id,t){ const el=document.getElementById('s-'+id); if(!el) return; el.textContent=t; setTimeout(()=>el.textContent='',1400); }
+
 render();
+AOS.onChange(render);
 </script>
 </body>
 </html>

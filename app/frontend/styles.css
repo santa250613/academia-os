@@ -1,0 +1,142 @@
+/* Academia OS · frontend/styles.css
+   CSS compartido y responsive (celular · tablet · laptop · pantallas grandes).
+   Estrategia: layouts fluidos con auto-fit/minmax (sin depender de un solo breakpoint),
+   tablas que se vuelven tarjetas en celular, y objetivos táctiles de 44px. */
+
+:root{
+  --bg:#0b0e17;--panel:#141826;--line:#262d42;--txt:#e8ecf5;--mut:#8a93ab;
+  --acc:#7c5cff;--ok:#2dd4a7;--bad:#ff6b81;--warn:#ffb454;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.4;overflow-wrap:break-word}
+img,canvas,svg{max-width:100%}
+a{color:var(--acc);text-decoration:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ---------- contenedor ---------- */
+.wrap{
+  max-width:1180px;margin:0 auto;
+  padding:clamp(14px,3vw,28px) clamp(12px,3vw,20px) 60px;
+  padding-left:max(clamp(12px,3vw,20px),env(safe-area-inset-left));
+  padding-right:max(clamp(12px,3vw,20px),env(safe-area-inset-right));
+  padding-bottom:max(60px,env(safe-area-inset-bottom));
+}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-bottom:6px}
+.brand{font-size:clamp(1.15rem,3.6vw,1.45rem);font-weight:700}
+.brand b{color:var(--acc)}
+.sub{color:var(--mut);font-size:.85em;margin:2px 0 22px}
+.tag{display:inline-block;font-size:.72em;padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mut)}
+footer{margin-top:26px;color:var(--mut);font-size:.78em;text-align:center}
+
+/* ---------- navegación ---------- */
+nav{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+nav a{flex:0 1 auto;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 16px;color:var(--txt);font-size:.9em;font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+nav a:hover{border-color:var(--acc)}
+
+/* ---------- grids fluidos ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:clamp(8px,2vw,14px);margin-bottom:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;margin-bottom:16px}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+
+/* ---------- tarjetas y paneles ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:clamp(12px,2.5vw,18px);margin-bottom:16px;min-width:0}
+.panel h3{margin:0 0 14px;font-size:.95em;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.kpi .n{font-size:clamp(1.5rem,5vw,2rem);font-weight:700}
+.kpi .t{color:var(--mut);font-size:.8em;margin-top:2px}
+.kpi.ok .n{color:var(--ok)}.kpi.bad .n{color:var(--bad)}.kpi.acc .n{color:var(--acc)}
+.card{background:#131830;border:1px solid var(--line);border-radius:14px;padding:clamp(14px,3vw,20px);cursor:pointer;transition:border-color .15s,transform .15s;min-width:0}
+.card:hover{border-color:var(--acc);transform:translateY(-2px)}
+.card h2{margin:0 0 4px;font-size:1.08em}
+.card .abrir{color:var(--acc);font-size:.8em;margin:12px 0 0;font-weight:600}
+.det h2{margin:0;font-size:1.05em}
+.hor{color:var(--mut);font-size:.8em;margin:0 0 14px}
+.canvas-box{position:relative;height:clamp(220px,45vw,300px)}
+.m-sub{color:var(--mut);font-size:.78em}
+.tiny{font-size:.74em;color:var(--mut);margin-top:10px}
+
+/* ---------- listas de alumnos ---------- */
+ul{margin:0;padding:0}
+li{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:9px 10px;border-radius:9px;margin-bottom:6px;font-size:.88em}
+li.act{background:#12172a}
+li.pend{background:#0e1220;color:#4a5168}
+li .who{min-width:0;flex:1 1 150px}
+li .nm{font-weight:600}
+li.pend .nm{color:#7a8299;font-weight:400}
+li .tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.n-pos{color:var(--mut);font-size:.78em;display:inline-block;min-width:22px}
+.meta{color:var(--mut);font-size:.76em;display:block}
+.lis{display:flex;flex-direction:column}
+
+/* ---------- pastillas ---------- */
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.74em;font-weight:700;white-space:nowrap}
+.pill.ok{background:rgba(45,212,167,.16);color:var(--ok)}
+.pill.bad{background:rgba(255,107,129,.16);color:var(--bad)}
+.pill.warn{background:rgba(255,180,84,.16);color:var(--warn)}
+.pill.pend{background:#232a40;color:#8a93ab}
+
+/* ---------- formularios y botones ---------- */
+select,input[type=date],.btn{background:#0e1220;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:.85em;font-family:inherit;min-height:38px;max-width:100%}
+.btn{cursor:pointer;text-decoration:none;display:inline-block;font-weight:600}
+.btn.add{background:var(--acc);border:none;color:#fff;font-weight:700}
+.btn.pay{background:var(--ok);color:#04140e;border:none;font-weight:700}
+.btn.ghost{background:transparent}
+.btn.primary{background:var(--acc);border:none;color:#fff;border-radius:9px;padding:8px 14px}
+.del{background:none;border:none;cursor:pointer;color:#7a8299;font-size:1em;opacity:.8;min-width:36px;min-height:36px}
+.del:hover{color:var(--bad);opacity:1}
+.addrow{display:flex;gap:8px;flex-wrap:wrap}
+.addrow select{flex:1 1 180px}
+.toolbar{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;margin-bottom:18px;color:var(--mut);font-size:.85em}
+.saved{color:var(--ok);font-size:.8em;padding:0 6px}
+
+/* ---------- tablas ---------- */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.9em}
+th{color:var(--mut);text-align:left;font-weight:600;font-size:.75em;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+
+/* ---------- recordatorios ---------- */
+.msg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.88em}
+.msg-row:last-child{border-bottom:none}
+.wa{color:#25d366;font-weight:600}
+
+/* ---------- TABLET Y CELULAR GRANDE ---------- */
+@media(max-width:900px){
+  .panel h3{font-size:.88em}
+}
+
+/* ---------- CELULAR: tablas → tarjetas ---------- */
+@media(max-width:640px){
+  table.rt thead{display:none}
+  table.rt,table.rt tbody,table.rt tr,table.rt td{display:block;width:100%}
+  table.rt tr{border:1px solid var(--line);border-radius:12px;padding:6px 12px;margin-bottom:10px;background:#101423}
+  table.rt tr:last-child{margin-bottom:0}
+  table.rt td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:none;padding:7px 0;text-align:right}
+  table.rt td::before{content:attr(data-label);color:var(--mut);font-size:.72em;text-transform:uppercase;letter-spacing:.06em;text-align:left;flex-shrink:0}
+  table.rt td[colspan]{display:block;text-align:center}
+  table.rt td[colspan]::before{content:none}
+  table.rt select{width:60%;min-width:0}
+  .msg-row{flex-direction:column;align-items:stretch}
+  .msg-row .btn{width:100%}
+  .addrow .btn{flex:1 1 100%}
+  nav a{flex:1 1 40%;justify-content:center}
+  .toolbar input[type=date]{flex:1}
+}
+
+/* pantallas táctiles: botones cómodos */
+@media(pointer:coarse){
+  select,input[type=date],.btn{min-height:44px;font-size:16px}
+}
+
+/* pantallas muy grandes */
+@media(min-width:1600px){
+  .wrap{max-width:1360px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important}
+  .card:hover{transform:none}
+}
