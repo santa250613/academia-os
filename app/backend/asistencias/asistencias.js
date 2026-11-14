@@ -27,6 +27,10 @@
       if(!cs.length) return [0,0,0,0];
       return cs[0].asis.map((_,w)=>Math.round(cs.reduce((a,x)=>a+x.asis[w],0)/cs.length*100));
     },
-    total(c){ return c.asis.reduce((a,b)=>a+b,0)+' / '+c.asis.length; }
+    total(c){
+      const usadas = window.AOS.usadas(c);
+      const totalPaq = c.paq === 'mensual' ? '∞' : window.AOS.packNum(c.paq);
+      return usadas + ' / ' + totalPaq;
+    }
   };
 })();
