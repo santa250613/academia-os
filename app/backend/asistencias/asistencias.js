@@ -9,10 +9,10 @@
         .sort((a,b)=>rank(a)-rank(b)||a.n.localeCompare(b.n,'es'));
     },
     /* estado de un alumno en una fecha:
-       {estado:'asistio', hora} | {estado:'falta'} | {estado:'futuro'} */
+       {estado:'asistio', hora, manual} | {estado:'falta'} | {estado:'futuro'} */
     estadoDia(x,fecha){
       const reg=(x.log||[]).find(l=>l.d===fecha);
-      if(reg) return {estado:'asistio',hora:reg.h};
+      if(reg) return {estado:'asistio',hora:reg.h,manual:!!reg.m};
       return {estado: fecha>window.AOS.hoy() ? 'futuro' : 'falta'};
     },
     /* quiénes se registraron en una fecha (para el dashboard) */
@@ -27,10 +27,6 @@
       if(!cs.length) return [0,0,0,0];
       return cs[0].asis.map((_,w)=>Math.round(cs.reduce((a,x)=>a+x.asis[w],0)/cs.length*100));
     },
-    total(c){
-      const usadas = window.AOS.usadas(c);
-      const totalPaq = c.paq === 'mensual' ? '∞' : window.AOS.packNum(c.paq);
-      return usadas + ' / ' + totalPaq;
-    }
+    total(c){ return c.asis.reduce((a,b)=>a+b,0)+' / '+c.asis.length; }
   };
 })();

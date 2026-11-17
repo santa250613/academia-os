@@ -25,6 +25,7 @@
 <script src="../backend/clientes/clientes.js?v=3"></script>
 <script src="../backend/pagos/pagos.js?v=3"></script>
 <script src="../backend/asistencias/asistencias.js?v=3"></script>
+<script src="../backend/confirm/confirm.js?v=3"></script>
 <script>
 const CS=AOS.classes(), esc=AOS.esc;
 let abierto=null, fecha=AOS.hoy();
@@ -35,7 +36,7 @@ inp.addEventListener('change',()=>{ fecha=inp.value||AOS.hoy(); render(); });
 /* pastilla de asistencia del día elegido */
 function pillAsis(x){
   const d=AOSAsis.estadoDia(x,fecha);
-  if(d.estado==='asistio') return `<span class="pill ok">✔ Asistió · ${esc(d.hora)}</span>`;
+  if(d.estado==='asistio') return `<span class="pill ok">✔ Asistió · ${esc(d.hora)}${d.manual?' · manual':''}</span>`;
   if(d.estado==='futuro')  return `<span class="pill pend">Por venir</span>`;
   return `<span class="pill bad">✖ Falta</span>`;
 }
@@ -48,10 +49,17 @@ function lista(k,detail){
   return g.map((x,i)=>{
     const motivo=AOS.motivo(x);
     const extra=detail?`<span class="meta">🎯 ${AOS.restantes(x)} de ${AOS.packLabel(x.paq)} restantes${motivo?' · '+motivo:''}</span>`:'';
+    /* asistencia manual: solo en la gestión del grupo y nunca en fechas futuras */
+    let man='';
+    if(detail && AOSAsis.estadoDia(x,fecha).estado!=='futuro'){
+      man=AOSAsis.estadoDia(x,fecha).estado==='asistio'
+        ?`<button class="btn sm" onclick="manual('${x.id}',false,event)">↩ Quitar asistencia</button>`
+        :`<button class="btn sm add" onclick="manual('${x.id}',true,event)">✔ Marcar asistió</button>`;
+    }
     const del=detail?`<button class="del" title="Quitar del grupo" aria-label="Quitar a ${esc(x.n)} del grupo" onclick="quitar('${x.id}',event)">✕</button>`:'';
     return `<li class="${AOS.isPending(x)?'pend':'act'}">
       <span class="who"><span class="n-pos">${i+1}.</span><span class="nm">${esc(x.n)}</span>${extra}</span>
-      <span class="tags">${pillAsis(x)}${pillPago(x)}${del}</span>
+      <span class="tags">${pillAsis(x)}${pillPago(x)}${man}${del}</span>
     </li>`;}).join('');
 }
 
@@ -83,15 +91,48 @@ function render(){
             <select id="sel-${k}" aria-label="Alumno a agregar">${opts}</select>
             <button class="btn add" onclick="agregar('${k}')">+ Agregar al grupo</button>
           </div>
-          <p class="tiny">La asistencia se marca sola cuando el alumno escanea el sticker NFC. Si ya usó todas las clases de su paquete, pasa a <b>Mensualidad vencida</b> hasta renovar el pago.</p>
+          <p class="tiny">La asistencia se marca sola cuando el alumno escanea el sticker NFC; si no lleva el celular, usa <b>✔ Marcar asistió</b> (aplica a la fecha elegida arriba). Si ya usó todas las clases de su paquete, pasa a <b>Mensualidad vencida</b> hasta renovar el pago.</p>
           <p class="tiny">✕ quita a la persona del grupo (puede añadirse después a otra clase desde aquí).</p>
         </div>
       </div>
     </div>`;}).join('');
 }
+/* asistencia manual para la fecha elegida arriba */
+async function manual(id,presente,e){
+  e.stopPropagation();
+  const x=AOS.get(id); if(!x) return;
+  if(presente){
+    if(AOS.isPending(x)){
+      const ok=await AOSConfirm.ask({
+        titulo:'¿Marcar asistencia?',
+        mensaje:`${x.n} tiene la mensualidad pendiente (${AOS.estadoLabel(x).toLowerCase()}). ¿Registrar su asistencia de todos modos?`,
+        confirmar:'Sí, marcar', peligro:false
+      });
+      if(!ok) return;
+    }
+  } else {
+    const ok=await AOSConfirm.ask({
+      titulo:'¿Quitar la asistencia?',
+      mensaje:`${x.n} volverá a figurar como "Falta" ese día y se le devolverá la clase del paquete.`,
+      confirmar:'Sí, quitar'
+    });
+    if(!ok) return;
+  }
+  AOS.marcarManual(id,fecha,presente);
+  render();
+}
 function toggle(k){ abierto=abierto===k?null:k; render(); }
 function agregar(k){ const s=document.getElementById('sel-'+k); if(s&&s.value){ AOS.addClass(s.value,k); render(); } }
-function quitar(id,e){ e.stopPropagation(); AOS.removeFromClass(id); render(); }
+async function quitar(id,e){
+  e.stopPropagation();
+  const x=AOS.get(id); if(!x) return;
+  const ok=await AOSConfirm.ask({
+    titulo:'¿Quitar del grupo?',
+    mensaje:`${x.n} saldrá de ${CS[x.clase]||'su clase'}. Podrás volver a agregarlo/a desde esta misma pantalla.`,
+    confirmar:'Sí, quitar'
+  });
+  if(ok){ AOS.removeFromClass(id); render(); }
+}
 
 render();
 AOS.onChange(render);   // si alguien marca ingreso en check.html, esta vista se actualiza sola

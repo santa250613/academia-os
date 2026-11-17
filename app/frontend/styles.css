@@ -140,3 +140,19 @@ tr:last-child td{border-bottom:none}
   *{transition:none!important}
   .card:hover{transform:none}
 }
+
+/* ---------- ventana de confirmación (confirm.js) ---------- */
+.btn.danger{background:var(--bad);color:#1a0509;border:none;font-weight:700}
+dialog.aos-dialog{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:16px;padding:0;width:min(92vw,400px);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+dialog.aos-dialog::backdrop{background:rgba(5,7,12,.7)}
+.aos-dialog-body{padding:clamp(18px,5vw,24px)}
+.aos-dialog h2{margin:0 0 8px;font-size:1.1em}
+.aos-dialog p{margin:0 0 20px;color:var(--mut);font-size:.9em;line-height:1.5}
+.aos-actions{display:flex;gap:10px;justify-content:flex-end}
+@media(max-width:640px){
+  .aos-actions{flex-direction:column-reverse}
+  .aos-actions .btn{width:100%}
+}
+
+/* botón compacto (asistencia manual) */
+.btn.sm{padding:5px 10px;font-size:.78em;min-height:32px}

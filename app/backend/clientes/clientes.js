@@ -40,6 +40,12 @@
   function load(){ seed(); return JSON.parse(localStorage.getItem(KEY)); }
   function save(d){ localStorage.setItem(KEY, JSON.stringify(d)); }
   const soloNum=s=>String(s).replace(/\D/g,'');
+  /* suma (+1) o resta (-1) una clase usada: semana actual primero, luego "extra" */
+  function contar(x,delta){
+    const last=x.asis.length-1;
+    if(delta>0){ if(x.asis[last]===0) x.asis[last]=1; else x.extra=(x.extra||0)+1; }
+    else { if((x.extra||0)>0) x.extra--; else x.asis[last]=0; }
+  }
 
   window.AOS={
     /* ---------- datos ---------- */
@@ -98,6 +104,20 @@
     removeFromClass(id){ return this.update(id,{clase:null}); },
     addClass(id,clase){ return this.update(id,{clase}); },
 
+    /* ---------- eliminar cliente (definitivo) ----------
+       Quita al cliente y sus registros de ingreso. La confirmación se pide en la
+       pantalla con AOSConfirm antes de llamar a esta función. */
+    eliminar(id){
+      const d=load(); const x=d.c.find(y=>y.id===id);
+      if(!x) return null;
+      d.c=d.c.filter(y=>y.id!==id);
+      Object.keys(d.regs).forEach(f=>{
+        d.regs[f]=d.regs[f].filter(r=>soloNum(r.t)!==soloNum(x.tel));
+        if(!d.regs[f].length) delete d.regs[f];
+      });
+      save(d); return x;
+    },
+
     /* ---------- ASISTENCIA (la llama check.html al escanear el NFC) ----------
        Busca al cliente por celular. Si no existe, lo crea "por iniciar".
        Devuelve { cliente, nuevo, repetido } */
@@ -114,13 +134,45 @@
       const repetido=x.log.some(l=>l.d===hoy);
       if(!repetido){
         x.log.push({d:hoy,h:hora});
-        const last=x.asis.length-1;                 // última posición = semana actual
-        if(x.asis[last]===0) x.asis[last]=1; else x.extra=(x.extra||0)+1;
+        contar(x,1);
         d.regs[hoy]=d.regs[hoy]||[];
         d.regs[hoy].push({n:x.n,t:x.tel,ts:hora});
       }
       save(d);
       return {cliente:x,nuevo,repetido};
+    },
+
+    /* ---------- ASISTENCIA MANUAL (desde Clases) ----------
+       Para quien no lleva el celular o cuando la profesora prefiere marcarla ella.
+       presente=true  -> marca "Asistió" en esa fecha
+       presente=false -> quita la asistencia (vuelve a "Falta")
+       Cuenta igual que el NFC: descuenta o devuelve una clase del paquete.
+       Devuelve {cliente,cambio} (cambio=false si ya estaba así) o null si no se puede. */
+    marcarManual(id,fecha,presente){
+      if(fecha>this.hoy()) return null;                 // no se marca el futuro
+      const d=load(); const x=d.c.find(y=>y.id===id);
+      if(!x) return null;
+      x.log=x.log||[];
+      const i=x.log.findIndex(l=>l.d===fecha);
+      let cambio=false;
+      if(presente && i<0){
+        const hora=fecha===this.hoy()?new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
+        x.log.push({d:fecha,h:hora,m:true});            // m:true = registrada a mano
+        contar(x,1);
+        d.regs[fecha]=d.regs[fecha]||[];
+        d.regs[fecha].push({n:x.n,t:x.tel,ts:hora,m:true});
+        cambio=true;
+      } else if(!presente && i>=0){
+        x.log.splice(i,1);
+        contar(x,-1);
+        if(d.regs[fecha]){
+          d.regs[fecha]=d.regs[fecha].filter(r=>soloNum(r.t)!==soloNum(x.tel));
+          if(!d.regs[fecha].length) delete d.regs[fecha];
+        }
+        cambio=true;
+      }
+      save(d);
+      return {cliente:x,cambio};
     }
   };
 })();
