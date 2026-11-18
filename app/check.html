@@ -68,7 +68,7 @@ function marcar(){
   if(r.nuevo){ av.className='warn'; av.textContent='Bienvenido/a. Pasa por recepción para elegir tu paquete.'; }
   else if(est==='vencido'){ av.className='bad'; av.textContent='Tu mensualidad está vencida. Pasa por recepción para renovarla.'; }
   else if(est==='por_iniciar'){ av.className='warn'; av.textContent='Aún no has pagado tu paquete. Pasa por recepción.'; }
-  else { av.className='ok'; av.textContent=`Te quedan ${AOS.restantes(c)} clases en tu paquete.`; }
+  else { av.className='ok'; av.textContent=`Clases usadas de tu paquete: ${AOS.progreso(c)}.`; }
 }
 </script>
 </body>

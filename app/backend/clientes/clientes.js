@@ -5,7 +5,8 @@
    Cliente: { id, n, tel, est, paq, clase, asis[4], log[], extra, base }
      est   : estado de pago guardado ('pagado' | 'vencido' | 'por iniciar')
      asis  : asistencia por semana (histórico, alimenta las gráficas)
-     log   : [{d:'YYYY-MM-DD', h:'hh:mm'}] registros reales por NFC
+     log   : [{d:'YYYY-MM-DD', h:'hh:mm', m?, p?}] registros reales (m=manual, p=asistió SIN estar al día:
+             se le respeta como clase vista cuando pague)
      extra : clases adicionales en una semana ya marcada (para contar bien el paquete)
      base  : clases ya consumidas al momento del último pago (reinicia el paquete)
 
@@ -74,6 +75,13 @@
     usadas(x){ return Math.max(0,this.totalRaw(x)-(x.base||0)); },
     /* pagó, pero ya consumió todas las clases del paquete */
     agotado(x){ return x.est==='pagado' && this.usadas(x)>=this.packNum(x.paq); },
+    /* progreso ASCENDENTE para mostrar en todas las pantallas: 0/4 -> 1/4 -> 2/4 ...
+       (mensual ilimitado no tiene tope: solo cuenta las clases) */
+    progreso(x){
+      if(x.paq==='mensual') return this.usadas(x)+' clases';
+      const n=this.packNum(x.paq);
+      return Math.min(this.usadas(x),n)+'/'+n;
+    },
     restantes(x){
       if(this.estado(x)==='vencido') return 0;
       return Math.max(0, this.packNum(x.paq)-this.usadas(x));
@@ -133,7 +141,7 @@
       x.log=x.log||[];
       const repetido=x.log.some(l=>l.d===hoy);
       if(!repetido){
-        x.log.push({d:hoy,h:hora});
+        x.log.push({d:hoy,h:hora,p:this.estado(x)!=='al_dia'});
         contar(x,1);
         d.regs[hoy]=d.regs[hoy]||[];
         d.regs[hoy].push({n:x.n,t:x.tel,ts:hora});
@@ -157,7 +165,7 @@
       let cambio=false;
       if(presente && i<0){
         const hora=fecha===this.hoy()?new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'—';
-        x.log.push({d:fecha,h:hora,m:true});            // m:true = registrada a mano
+        x.log.push({d:fecha,h:hora,m:true,p:this.estado(x)!=='al_dia'}); // m = a mano; p = sin estar al día
         contar(x,1);
         d.regs[fecha]=d.regs[fecha]||[];
         d.regs[fecha].push({n:x.n,t:x.tel,ts:hora,m:true});

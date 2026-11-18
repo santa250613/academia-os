@@ -36,7 +36,7 @@
      `<tr><td data-label="Nombre">${esc(x.n)}<br><span class="m-sub">${AOS.packLabel(x.paq)}${x.clase?' · '+CLASSES[x.clase]:''}</span></td>
       <td data-label="Estado"><span class="pill ${AOS.pillClass(x)}">${AOS.estadoLabel(x)}</span></td>
       <td data-label="Cuota">${P.fmt(P.precio(x.paq))}</td>
-      <td data-label="Asistencias">${AOSAsis.total(x)}</td></tr>`).join('');
+      <td data-label="Clases usadas">${AOS.progreso(x)}</td></tr>`).join('');
 
     /* recordatorios */
     msgs=[...P.vencidos().map(x=>({t:'pago',x})), ...cs.map(x=>({t:'clase',x}))].map(m=>{

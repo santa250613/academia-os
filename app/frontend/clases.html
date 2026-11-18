@@ -48,7 +48,7 @@ function lista(k,detail){
   if(!g.length) return '<li style="color:var(--mut)">Sin alumnos aún — agrégalo abajo ↓</li>';
   return g.map((x,i)=>{
     const motivo=AOS.motivo(x);
-    const extra=detail?`<span class="meta">🎯 ${AOS.restantes(x)} de ${AOS.packLabel(x.paq)} restantes${motivo?' · '+motivo:''}</span>`:'';
+    const extra=detail?`<span class="meta">🎯 ${AOS.progreso(x)} · ${AOS.packLabel(x.paq)}${motivo?' · '+motivo:''}</span>`:'';
     /* asistencia manual: solo en la gestión del grupo y nunca en fechas futuras */
     let man='';
     if(detail && AOSAsis.estadoDia(x,fecha).estado!=='futuro'){
