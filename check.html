@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia OS · Ingreso NFC</title>
+<meta name="robots" content="noindex">
+<!-- Restaura la URL de la tarjeta NFC (check.html en raíz) → app/check.html.
+     La app real vive en app/check.html; esta página conserva ?parámetros y #. -->
+<noscript><meta http-equiv="refresh" content="0; url=app/check.html"></noscript>
+<script>location.replace('app/check.html'+location.search+location.hash);</script>
+</head>
+<body style="background:#0b0e17;color:#8a93ab;font-family:system-ui,sans-serif;text-align:center;padding-top:30vh">
+  Abriendo ingreso… <a href="app/check.html" style="color:#7c5cff">toca aquí si no avanza</a>
+</body>
+</html>
